@@ -1,0 +1,71 @@
+﻿@{
+    Layout = null;
+}
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <title>Login</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/Solution.CestaFeira.styles.css" asp-append-version="true" />
+    <script src="~/login_files/all.js.download" crossorigin="anonymous"></script>
+</head>
+<body style="background-color: #4CAF50;">
+    <div id="layoutAuthentication">
+        <div id="layoutAuthentication_content">
+            <main>
+                <div class="container">
+                    <div class="row justify-content-center">
+                        <div class="col-lg-5">
+                            <div class="card shadow-lg border-0 rounded-lg mt-5">
+                                <div class="card-header"><h3 class="text-center font-weight-light my-4">Login</h3></div>
+                                <div class="card-body">
+                                    <form asp-action="Login" asp-controller="Usuario" method="post">
+                                        @if (TempData["ErrorMessage"] != null)
+                                        {
+                                            <div class="alert alert-danger">
+                                                @TempData["ErrorMessage"]
+                                            </div>
+                                        }
+                                        @if (TempData["SucessMessage"] != null)
+                                        {
+                                            <div class="alert alert-success">
+                                                @TempData["SucessMessage"]
+                                            </div>
+                                        }
+                                        <div class="form-floating mb-3">
+                                            <input type="email" name="Email" id="Email" class="form-control" placeholder="Email" required>
+                                            <label for="Email">Email</label>
+                                            </
+                                        </div>
+                                        <div class="form-floating mb-3">
+                                            <input type="password" name="Senha" id="Senha" class="form-control" placeholder="Senha" required>
+                                            <label for="Senha">Senha</label>
+                                        </div>
+                                        <div class="d-flex align-items-center justify-content-between mt-4 mb-0">
+                                            <button type="submit" class="btn btn-block" style="background-color: transparent; color: black; border: 2px solid black; margin: 10px 0;">Login</button>
+                                        </div>
+                                    </form>
+                                </div>
+                                <div class="card-footer text-center py-3">
+                                    <div class="small"><a href="~/Usuario/CadastrarUsuario">Cadastre-se</a></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    <script src="~/login_files/bootstrap.bundle.min.js.download" crossorigin="anonymous"></script>
+    <script src="~/login_files/scripts.js.download"></script>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+</body>
+</html>

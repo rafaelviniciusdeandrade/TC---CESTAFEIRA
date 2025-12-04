@@ -1,0 +1,287 @@
+﻿@using CestaFeira.Web.Models.Produto
+@model IEnumerable<ProdutoModel>
+
+@{
+    Layout = null;
+}
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="description" content="" />
+    <meta name="author" content="" />
+    <title>Página Principal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css" rel="stylesheet" />
+    <link href="~/css/styles.css" rel="stylesheet" />
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container px-4 px-lg-5">
+            <a class="navbar-brand" href="#!">CestaFeira</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" id="navbarDropdown" href="#" role="button" data-bs-toggle="dropdown">Menu</a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" href="~/Produto/Produtos">Todos os Produtos</a></li>
+
+                            @if (User.IsInRole("ADM") || User.IsInRole("PROD"))
+                            {
+                                <li><a class="dropdown-item" href="~/Produto/CadastrarProdutos">Cadastrar Produtos</a></li>
+                                <li><a class="dropdown-item" href="#!">Gerenciar Produtos</a></li>
+                            }
+                            <li><a class="dropdown-item" href="~/Pedido/Pedidos">Ver Pedidos</a></li>
+                            <li><a class="dropdown-item" href="~/Usuario/Sair">Sair</a></li>
+
+                        </ul>
+                    </li>
+                </ul>
+                <form class="d-flex" id="carrinhoForm" onsubmit="return false;">
+                    <button class="btn btn-outline-dark" type="button" id="carrinhoBtn" data-bs-toggle="modal" data-bs-target="#carrinhoModal">
+                        <i class="bi-cart-fill me-1"></i>
+                        Carrinho
+                        <span class="badge bg-dark text-white ms-1 rounded-pill" id="quantidadeCarrinho">0</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </nav>
+
+    <header class="bg-dark py-5">
+        <div class="container px-4 px-lg-5 my-5">
+            <div class="text-center text-white">
+                <h1 class="display-4 fw-bolder">Produtos</h1>
+                <p class="lead fw-normal text-white-50 mb-0">Produtos de qualidade para sua casa</p>
+            </div>
+        </div>
+    </header>
+
+    <div class="container my-4">
+        <label for="produtorFilter" class="form-label">Filtrar por Produtor:</label>
+        <select class="form-select" id="produtorFilter" onchange="filtrarPorProdutor()">
+            <option value="">Todos os Produtores</option>
+            @if (Model != null)
+            {
+                @foreach (var produtor in Model.Select(p => p.Usuario?.NomeFantasia).Distinct())
+                {
+                    <option value="@produtor">@produtor</option>
+                }
+            }
+
+        </select>
+    </div>
+    @if (Model != null && Model.Any())
+    {
+        <section class="py-5">
+            <div class="container px-4 px-lg-5 mt-5">
+                <div class="row gx-4 gx-lg-5 row-cols-2 row-cols-md-3 row-cols-xl-4 justify-content-center">
+                    @foreach (var produto in Model)
+                    {
+                        var imagemBase64 = produto.imagem != null ? Convert.ToBase64String(produto.imagem) : null;
+                        var imagemSrc = !string.IsNullOrEmpty(imagemBase64) ? $"data:image/png;base64,{imagemBase64}" : "caminho/padrao/para/imagem.png";
+
+                        <div class="col mb-5 produto-item" data-produtor="@produto.Usuario.NomeFantasia">
+                            <div class="card h-100">
+                                <img class="card-img-top" src="@imagemSrc" alt="Imagem do Produto: @produto.Nome" />
+                                <div class="card-body p-4">
+                                    <div class="text-center">
+                                        <h5 class="fw-bolder">@produto.Nome</h5>
+                                        @produto.Descricao
+                                        R$ @produto.valorUnitario.ToString("F2")
+                                    </div>
+                                </div>
+                                <div class="card-footer p-4 pt-0 border-top-0 bg-transparent">
+                                    <div class="text-center">
+                                        <input type="number" id="quantidade_@produto.Id" min="1" value="1" class="form-control mb-2" style="width: 80px; margin: 0 auto;" />
+                                        <button type="button" class="btn btn-outline-dark mt-auto" data-id="@produto.Id" onclick="adicionarAoCarrinho(this)">Adicionar ao carrinho</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                </div>
+            </div>
+        </section>
+    }
+    else
+    {
+        <p class="text-center">Nenhum produto disponível.</p>
+    }
+
+    <div class="modal fade" id="carrinhoModal" tabindex="-1" aria-labelledby="carrinhoModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="carrinhoModalLabel">Carrinho de Compras</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <ul id="listaItensCarrinho" class="list-group">
+                        <!-- Os itens do carrinho serão carregados aqui -->
+                    </ul>
+                </div>
+                <div class="mt-3">
+                    <h5 id="totalCarrinho">Total: R$ 0,00</h5>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                    <button type="button" class="btn btn-primary" onclick="finalizarCompra()">Finalizar Compra</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="py-5 bg-dark"></footer>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        function adicionarAoCarrinho(button) {
+            var produtoId = $(button).data('id');
+            var quantidade = $('#quantidade_' + produtoId).val();
+            if (!produtoId || !quantidade || quantidade <= 0) {
+                alert("Erro: ID do produto ou quantidade inválidos.");
+                return;
+            }
+
+            $.ajax({
+                url: '/Pedido/AdicionarProdutoAoCarrinho',
+                type: 'POST',
+                data: {
+                    produtoId: produtoId,
+                    quantidade: quantidade
+                },
+                success: function (response) {
+                    if (response.success) {
+                        alert(response.message);
+                        $('#quantidadeCarrinho').text(response.quantidadeItens);
+                    } else {
+                        alert(response.message);
+                    }
+                },
+                error: function (xhr, status, error) {
+                    // Verifica se a resposta de erro contém JSON e se há mensagem
+                    try {
+                        var response = JSON.parse(xhr.responseText);
+                        if (response && response.message) {
+                            alert(response.message);  // Exibe a mensagem do servidor
+                        } else {
+                            alert("Erro desconhecido ao adicionar o produto ao carrinho.");
+                        }
+                    } catch (e) {
+                        alert("Erro na requisição ao servidor.");
+                    }
+                }
+            });
+        }
+
+        function atualizarCarrinho() {
+            $.ajax({
+                url: '/Pedido/ObterQuantidadeItensCarrinho',
+                type: 'GET',
+                success: function (response) {
+                    if (response.success) {
+                        $('#quantidadeCarrinho').text(response.quantidadeItens);
+                    }
+                    else {
+                        alert(response.message);
+                    }
+                },
+                error: function () {
+                    console.log("Erro ao obter a quantidade de itens no carrinho.");
+                }
+            });
+        }
+
+        $('#carrinhoModal').on('show.bs.modal', function () {
+            $.ajax({
+                url: '/Pedido/ObterItensCarrinho',
+                type: 'GET',
+                success: function (response) {
+                    if (response.success) {
+                        var lista = $('#listaItensCarrinho');
+                        lista.empty();
+
+                        response.itens.forEach(function (item) {
+                            lista.append('<li class="list-group-item" data-produto-id="' + item.ProdutoId + '">'
+                                + item.Nome + ' - Quantidade: <span class="quantidade">' + item.Quantidade
+                                + '</span> - R$ ' + item.ValorUnitario.toFixed(2) + '</li>');
+                        });
+
+                        $('#totalCarrinho').text('Total: R$ ' + response.total.toFixed(2));
+                    } else {
+                        $('#listaItensCarrinho').html('<li class="list-group-item">Carrinho vazio.</li>');
+                        $('#totalCarrinho').text('');
+                    }
+                },
+                error: function () {
+                    console.log("Erro ao obter os itens do carrinho.");
+                }
+            });
+        });
+
+        function finalizarCompra() {
+            var itensCarrinho = [];
+            var totalCarrinho = document.getElementById("totalCarrinho").innerText.replace("Total: R$", "").trim();
+
+            document.querySelectorAll("#listaItensCarrinho li").forEach(function (item) {
+                var produtoId = item.getAttribute("data-produto-id");
+                var nomeProduto = item.innerText.split(' - ')[0];
+                var quantidade = item.querySelector('.quantidade').innerText;
+                itensCarrinho.push({
+                    Id: produtoId,
+                    Nome: nomeProduto,
+                    Quantidade: quantidade
+                });
+            });
+
+            fetch('/Pedido/FinalizarCompra', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    Produtos: itensCarrinho,
+                    ValorTotal: totalCarrinho
+                })
+            }).then(response => {
+                if (response.ok) {
+                    alert('Compra finalizada com sucesso!');
+                    window.location.href = '/Produto/Produtos';
+                } else {
+                    alert('Erro ao finalizar a compra');
+                }
+            }).catch(error => {
+                console.error('Erro na requisição:', error);
+                alert('Erro ao finalizar a compra');
+            });
+        }
+
+        // Função para filtrar os produtos pelo produtor
+        function filtrarPorProdutor() {
+            var selecionado = document.getElementById("produtorFilter").value.trim().toLowerCase(); // .trim() remove espaços extras
+            var produtos = document.querySelectorAll(".produto-item");
+
+            produtos.forEach(function (produto) {
+                var nomeProdutor = produto.getAttribute("data-produtor").toLowerCase();
+
+                if (selecionado === "" || nomeProdutor.includes(selecionado)) {
+                    produto.style.display = "block";
+                } else {
+                    produto.style.display = "none";
+                }
+            });
+        }
+
+    </script>
+</body>
+
+</html>
